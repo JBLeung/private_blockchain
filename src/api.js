@@ -5,6 +5,9 @@ import {Block, Blockchain} from './simpleChain'
 const router = express()
 
 const initGet = (blockchain) => {
+  // health check
+  router.get('/', (req, res) => res.send('Working'))
+
   // get block by block height
   router.get('/block/:blockHeight', async (req, res, next) => {
     try {
