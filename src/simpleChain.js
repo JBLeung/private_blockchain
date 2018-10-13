@@ -71,20 +71,25 @@ class Blockchain {
   // get block
   async getBlock(key) {
     // return object as a single string
-    const blockString = await this.levelDB.getLevelDBData(key)
-    return JSON.parse(blockString)
+    try {
+      const blockString = await this.levelDB.getLevelDBData(key)
+      return JSON.parse(blockString)
+    } catch (e) {
+      console.log('Error: getBlock', e)
+      return false
+    }
   }
 
   // validate block
-  async validateBlock(key) {
+  async validateBlock({key, block}) {
     // get block object
-    const block = await this.getBlock(key)
+    const validateBlock = block || await this.getBlock(key)
     // get block hash
-    const blockHash = block.hash
+    const blockHash = validateBlock.hash
     // remove block hash to test block integrity
-    block.hash = ''
+    validateBlock.hash = ''
     // generate block hash
-    const validBlockHash = SHA256(JSON.stringify(block)).toString()
+    const validBlockHash = SHA256(JSON.stringify(validateBlock)).toString()
     // Compare
     if (blockHash === validBlockHash) {
       return true
@@ -100,7 +105,7 @@ class Blockchain {
     const validatePromises = []
     for (let i = 0; i < chainHeight; i += 1) {
       // validate block
-      validatePromises.push(this.validateBlock(i))
+      validatePromises.push(this.validateBlock({key: i}))
     }
 
     Promise.all(validatePromises).then((results) => {
