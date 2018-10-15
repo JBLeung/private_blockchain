@@ -4,6 +4,13 @@ import {Block, Blockchain} from './simpleChain'
 
 const router = express()
 
+const errorHandling = (res, err, statusCode, {key, code, message}) => {
+  if (err) {
+    console.log(`Error: ${key} - ${message}`, err)
+    res.status(statusCode).send({ message, code })
+  }
+}
+
 const initGet = (blockchain) => {
   // health check
   router.get('/', (req, res) => res.send('Working'))
@@ -16,12 +23,14 @@ const initGet = (blockchain) => {
       if (block) {
         res.send(block)
       } else {
-        throw new Error(`Block not exist, blockHeight:${blockHeight}`)
+        const error = new Error(`Block not exist, blockHeight:${blockHeight}`)
+        error.code = 'BLOCK_NOT_EXIST'
+        throw error
       }
     } catch (err) {
       if (err) {
-        console.log('Error: /block/:blockHeight', err)
-        next(err.message)
+        const {message, code} = err
+        errorHandling(res, err, 400, {key: '/block/:blockHeight', message, code})
       }
     }
   })
@@ -29,7 +38,7 @@ const initGet = (blockchain) => {
 
 const initPost = (blockchain) => {
   // create block
-  router.post('/block', async (req, res, next) => {
+  router.post('/block', async (req, res) => {
     try {
       const {body} = req.body
       if (body) {
@@ -37,12 +46,14 @@ const initPost = (blockchain) => {
         res.status(200)
         res.send(JSON.parse(value))
       } else {
-        res.status(400)
-        throw new Error('Missing require body')
+        const error = new Error('Missing require body')
+        error.code = 'EMPTY_BODY'
+        throw error
       }
     } catch (err) {
       if (err) {
-        next(err.message)
+        const {message, code} = err
+        errorHandling(res, err, 400, {key: '/block/:blockHeight', message, code})
       }
     }
   })
