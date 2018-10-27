@@ -16,7 +16,7 @@ const initGet = (blockchain) => {
   router.get('/', (req, res) => res.send('Working'))
 
   // get block by block height
-  router.get('/block/:blockHeight', async (req, res, next) => {
+  router.get('/block/:blockHeight', async (req, res) => {
     try {
       const {blockHeight} = req.params
       const block = await blockchain.getBlock(blockHeight)
@@ -57,6 +57,35 @@ const initPost = (blockchain) => {
       }
     }
   })
+
+  // requestValidation
+  router.post('/requestValidation', async (req, res) => {
+    try {
+      const {address} = req.body
+      if (address) {
+        const validationWindow = 5 * 60
+        const requestTimeStamp = new Date().getTime()
+        const result = {
+          address,
+          requestTimeStamp,
+          message: `${address}:${requestTimeStamp}:starRegistry`,
+          validationWindow,
+        }
+
+        res.status(200)
+        res.send(result)
+      } else {
+        const error = new Error('Missing require address')
+        error.code = 'MISSING_REQUIRE_FIELD'
+        throw error
+      }
+    } catch (err) {
+      if (err) {
+        const {message, code} = err
+        errorHandling(res, err, 400, {key: '/requestValidation', message, code})
+      }
+    }
+  })
 }
 
 const init = (port) => {
@@ -73,4 +102,3 @@ const init = (port) => {
 module.exports = {
   init,
 }
-
