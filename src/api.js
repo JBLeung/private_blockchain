@@ -40,6 +40,26 @@ const initGet = (blockchain) => {
       }
     }
   })
+
+  // /stars/address:[ADDRESS]
+  router.get('/stars/address:address', async (req, res) => {
+    try {
+      const {address} = req.params
+      const block = await blockchain.getBlock(address)
+      if (block) {
+        res.send(block)
+      } else {
+        const error = new Error(`Block not exist, address:${address}`)
+        error.code = 'BLOCK_NOT_EXIST'
+        throw error
+      }
+    } catch (err) {
+      if (err) {
+        const {message, code} = err
+        errorHandling(res, err, 400, {key: '/stars/address:address', message, code})
+      }
+    }
+  })
 }
 
 const initPost = (blockchain) => {
@@ -70,7 +90,7 @@ const initPost = (blockchain) => {
 
         const {value} = await blockchain.addBlock(new Block({
           address, star: starObject
-        }))
+        }),address)
         res.status(200)
         res.send(JSON.parse(value))
     } catch (err) {

@@ -43,7 +43,7 @@ class Blockchain {
   }
 
   // Add new block
-  async addBlock(newBlock) {
+  async addBlock(newBlock, key) {
     const chain = await this.getChain()
     const currnetChainHeight = chain.length
     // Block height
@@ -60,7 +60,7 @@ class Blockchain {
     newBlock.hash = SHA256(JSON.stringify(newBlock)).toString()
     // Adding block object to chain
 
-    return this.levelDB.addLevelDBData(newBlock.height, JSON.stringify(newBlock))
+    return this.levelDB.addLevelDBData(key?key:newBlock.height, JSON.stringify(newBlock))
   }
 
   // Get block height
