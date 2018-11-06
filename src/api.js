@@ -2,7 +2,7 @@ import express from 'express'
 import bodyParser from 'body-parser'
 import bitcoinMessage from 'bitcoinjs-message'
 import {Block, Blockchain} from './simpleChain'
-import {NotrayaMessageManager} from './notraryService'
+import {NotrayaMessageManager, Star} from './notraryService'
 import toNumber from "lodash/toNumber"
 import round from "lodash/round"
 
@@ -46,16 +46,33 @@ const initPost = (blockchain) => {
   // create block
   router.post('/block', async (req, res) => {
     try {
-      const {body} = req.body
-      if (body) {
-        const {value} = await blockchain.addBlock(new Block(body))
+        const {address, star} = req.body
+        // handle star
+        if(!address){
+          const error = new Error("Missing require address")
+          error.code = "MISSING_REQUIRE_FIELD"
+          throw error
+        }
+        if(!star){
+          const error = new Error("Missing require star")
+          error.code = "MISSING_REQUIRE_FIELD"
+          throw error
+        }
+
+
+        const  {ra:rightAscension, dec:declination, mag:magnitude, con:constellation, story} = star
+        const starObject = new Star({rightAscension, declination, magnitude, constellation, story}).getStartObject()
+        if(!starObject){
+          const error = new Error("cannot create star")
+          error.code = "FAIL_CREATE_STAR"
+          throw error
+        }
+
+        const {value} = await blockchain.addBlock(new Block({
+          address, star: starObject
+        }))
         res.status(200)
         res.send(JSON.parse(value))
-      } else {
-        const error = new Error('Missing require body')
-        error.code = 'EMPTY_BODY'
-        throw error
-      }
     } catch (err) {
       if (err) {
         const {message, code} = err
