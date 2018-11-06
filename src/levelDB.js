@@ -10,7 +10,7 @@ class levelDB {
     return new Promise((resolve, reject) => {
       this.db.put(key, value, (err) => {
         if (err) {
-          console.log(`Block ${key} submission failed`, err)
+          console.log(`Key ${key} submission failed`, err)
           return reject(err)
         }
         return resolve({key, value})

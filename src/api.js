@@ -1,8 +1,14 @@
 import express from 'express'
 import bodyParser from 'body-parser'
+import bitcoinMessage from 'bitcoinjs-message'
 import {Block, Blockchain} from './simpleChain'
+import {NotrayaMessageManager} from './notraryService'
+import toNumber from "lodash/toNumber"
+import round from "lodash/round"
 
 const router = express()
+const notrayaMessageManager = new NotrayaMessageManager()
+const DEFAULT_VALIDATION_WINDOW = 5 * 60
 
 const errorHandling = (res, err, statusCode, {key, code, message}) => {
   if (err) {
@@ -63,7 +69,7 @@ const initPost = (blockchain) => {
     try {
       const {address} = req.body
       if (address) {
-        const validationWindow = 5 * 60
+        const validationWindow = DEFAULT_VALIDATION_WINDOW
         const requestTimeStamp = new Date().getTime()
         const result = {
           address,
@@ -71,7 +77,7 @@ const initPost = (blockchain) => {
           message: `${address}:${requestTimeStamp}:starRegistry`,
           validationWindow,
         }
-
+        notrayaMessageManager.saveMessage(address, result)
         res.status(200)
         res.send(result)
       } else {
@@ -83,6 +89,56 @@ const initPost = (blockchain) => {
       if (err) {
         const {message, code} = err
         errorHandling(res, err, 400, {key: '/requestValidation', message, code})
+      }
+    }
+  })
+
+
+  // /message-signature/validate
+  router.post('/message-signature/validate', async (req, res) => {
+    try {
+      const {address, signature} = req.body
+      if(!address){
+        const error = new Error('Missing require address')
+        error.code = 'MISSING_REQUIRE_FIELD'
+        throw error
+      }
+      if(!signature){
+        const error = new Error('Missing require signature')
+        error.code = 'MISSING_REQUIRE_FIELD'
+        throw error
+      }
+
+      notrayaMessageManager.getMessage(address).then(message=>{
+        try{
+          const validationWindow = (new Date().getTime() - toNumber(message.requestTimeStamp))/1000
+
+          if(DEFAULT_VALIDATION_WINDOW >= validationWindow){
+            const verifyResult = bitcoinMessage.verify(JSON.stringify(message), address, signature)
+            const status = message
+            message.messageSignature = verifyResult ? "valid" : "invalid"
+            message.validationWindow = round(validationWindow)
+            const result = {
+              registerStar: true,
+              status
+            }
+            res.status(200)
+            res.send(result)
+          }else{
+            const error = new Error("Validation window expired")
+            error.code = 'EXPIRED'
+            throw error
+          }
+        }catch(err){
+          const {message, code} = err
+          errorHandling(res, err, 400, {key: '/message-signature/validate', message, code})
+        }
+      })
+
+    } catch (err) {
+      if (err) {
+        const {message, code} = err
+        errorHandling(res, err, 400, {key: '/message-signature/validate', message, code})
       }
     }
   })
