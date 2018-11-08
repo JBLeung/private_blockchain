@@ -1,9 +1,13 @@
 import split from 'lodash/split'
 import isNumber from 'lodash/isNumber'
 import LevelDBManager from './levelDB'
+import round from 'lodash/round'
+import bitcoinMessage from 'bitcoinjs-message'
+import toNumber from 'lodash/toNumber'
 
 const message3rdKey = 'starRegistry'
 const messageSeparator = ':'
+const DEFAULT_VALIDATION_WINDOW = 5 * 60
 
 class Star{
   constructor(data){
@@ -54,10 +58,8 @@ class NotrayaMessageManager {
     }
     return {}
   }
-  saveMessage(address, message){
-    this.levelDB.addLevelDBData(address, JSON.stringify(message)).then(()=>{
-      this.levelDB.getLevelDBData(address).then()
-    })
+  saveMessage(address, message) {
+    this.levelDB.addLevelDBData(address, JSON.stringify(message)).then()
   }
   getMessage(address){
     return new Promise((resolve, reject)=>{
@@ -69,6 +71,41 @@ class NotrayaMessageManager {
         }
       })
     })
+  }
+  getMessageValidation(message, address, signature){
+    const validationWindow = this.getValidationWindow(message.requestTimeStamp)
+
+    if(validationWindow > 0){
+      const verifyResult = bitcoinMessage.verify(JSON.stringify(message), address, signature)
+      message.messageSignature = verifyResult ? "valid" : "invalid"
+      message.validationWindow = round(validationWindow)
+      return message
+    }
+    return false
+  }
+  saveValidatedAddress(address, requestTimeStamp){
+    this.levelDB.addLevelDBData(`validated-${address}`, JSON.stringify({requestTimeStamp})).then()
+  }
+  getValidatedAddress(address){
+    return new Promise((resolve, reject)=>{
+      this.levelDB.getLevelDBData(`validated-${address}`).then(validatedAddressObject=>{
+        try{
+          const {requestTimeStamp} = JSON.parse(validatedAddressObject)
+          resolve()
+
+        }catch(err){
+          reject(err)
+        }
+      })
+    })
+  }
+  getValidationWindow(requestTimeStamp){
+    const validationWindow = DEFAULT_VALIDATION_WINDOW - (new Date().getTime() - toNumber(requestTimeStamp))/1000
+    if(validationWindow > 0) return validationWindow
+    return false
+  }
+  getDefaultValidationWindow(){
+    return DEFAULT_VALIDATION_WINDOW
   }
 }
 

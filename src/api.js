@@ -1,6 +1,5 @@
 import express from 'express'
 import bodyParser from 'body-parser'
-import bitcoinMessage from 'bitcoinjs-message'
 import {Block, Blockchain} from './simpleChain'
 import {NotrayaMessageManager, Star} from './notraryService'
 import toNumber from "lodash/toNumber"
@@ -9,7 +8,6 @@ import omit from "lodash/omit"
 
 const router = express()
 const notrayaMessageManager = new NotrayaMessageManager()
-const DEFAULT_VALIDATION_WINDOW = 5 * 60
 
 const errorHandling = (res, err, statusCode, {key, code, message}) => {
   if (err) {
@@ -122,7 +120,7 @@ const initPost = (blockchain) => {
           if(messageObj){
             result = messageObj
             const {requestTimeStamp:previousRequestTimeStamp} = messageObj
-            const validationWindow = DEFAULT_VALIDATION_WINDOW - (new Date().getTime() - toNumber(previousRequestTimeStamp))/1000
+            const validationWindow = notrayaMessageManager.getValidationWindow(previousRequestTimeStamp)
             if(validationWindow > 0){
               result.validationWindow = round(validationWindow)
               isDone = true
@@ -130,7 +128,7 @@ const initPost = (blockchain) => {
           }
           if(!isDone){
             const requestTimeStamp = new Date().getTime()
-            const validationWindow = DEFAULT_VALIDATION_WINDOW
+            const validationWindow = notrayaMessageManager.getDefaultValidationWindow()
             result = {
               address,
               requestTimeStamp,
@@ -173,24 +171,19 @@ const initPost = (blockchain) => {
 
       notrayaMessageManager.getMessage(address).then(message=>{
         try{
-          const validationWindow = DEFAULT_VALIDATION_WINDOW - (new Date().getTime() - toNumber(message.requestTimeStamp))/1000
-
-          if(validationWindow > 0){
-            const verifyResult = bitcoinMessage.verify(JSON.stringify(message), address, signature)
-            const status = message
-            message.messageSignature = verifyResult ? "valid" : "invalid"
-            message.validationWindow = round(validationWindow)
-            const result = {
-              registerStar: true,
-              status
+            const status = notrayaMessageManager.getMessageValidation(message, address, signature)
+            if(status){
+              const result = {
+                registerStar: true,
+                status
+              }
+              res.status(200)
+              res.send(result)
+            }else{
+              const error = new Error("Validation window expired")
+              error.code = 'EXPIRED'
+              throw error
             }
-            res.status(200)
-            res.send(result)
-          }else{
-            const error = new Error("Validation window expired")
-            error.code = 'EXPIRED'
-            throw error
-          }
         }catch(err){
           const {message, code} = err
           errorHandling(res, err, 400, {key: '/message-signature/validate', message, code})
