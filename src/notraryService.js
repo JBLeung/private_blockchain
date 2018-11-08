@@ -87,16 +87,21 @@ class NotrayaMessageManager {
   saveValidatedAddress(address, requestTimeStamp){
     this.levelDB.addLevelDBData(`validated-${address}`, JSON.stringify({requestTimeStamp})).then()
   }
-  getValidatedAddress(address){
+  checkAddressIsValidated(address){
     return new Promise((resolve, reject)=>{
       this.levelDB.getLevelDBData(`validated-${address}`).then(validatedAddressObject=>{
-        try{
-          const {requestTimeStamp} = JSON.parse(validatedAddressObject)
-          resolve()
-
-        }catch(err){
-          reject(err)
+        if(validatedAddressObject){
+          try{
+            const {requestTimeStamp} = JSON.parse(validatedAddressObject)
+            resolve(this.getValidationWindow(requestTimeStamp) > 0)
+          }catch(err){
+            reject(err)
+          }
+        }else{
+          resolve(false)
         }
+      }).catch(err=>{
+        resolve(false)
       })
     })
   }

@@ -2,7 +2,6 @@ import express from 'express'
 import bodyParser from 'body-parser'
 import {Block, Blockchain} from './simpleChain'
 import {NotrayaMessageManager, Star} from './notraryService'
-import toNumber from "lodash/toNumber"
 import round from "lodash/round"
 import omit from "lodash/omit"
 
@@ -86,21 +85,25 @@ const initPost = (blockchain) => {
           error.code = "MISSING_REQUIRE_FIELD"
           throw error
         }
-
-
-        const  {ra:rightAscension, dec:declination, mag:magnitude, con:constellation, story} = star
-        const starObject = new Star({rightAscension, declination, magnitude, constellation, story}).getStartObject()
-        if(!starObject){
-          const error = new Error("cannot create star")
-          error.code = "FAIL_CREATE_STAR"
-          throw error
-        }
-
-        const {value} = await blockchain.addBlock(new Block({
-          address, star: starObject
-        }))
-        res.status(200)
-        res.send(JSON.parse(value))
+        const isValidated = await notrayaMessageManager.checkAddressIsValidated(address)
+          if(isValidated){
+            const  {ra:rightAscension, dec:declination, mag:magnitude, con:constellation, story} = star
+            const starObject = new Star({rightAscension, declination, magnitude, constellation, story}).getStartObject()
+            if(!starObject){
+              const error = new Error("cannot create star")
+              error.code = "FAIL_CREATE_STAR"
+              throw error
+            }
+            const {value} = await blockchain.addBlock(new Block({
+              address, star: starObject
+            }))
+            res.status(200)
+            res.send(JSON.parse(value))
+          }else{
+            const error = new Error("Address not yet validated")
+            error.code = "NOT_YET_VALIDATE"
+            throw error
+          }
     } catch (err) {
       if (err) {
         const {message, code} = err
