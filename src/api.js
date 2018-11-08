@@ -5,6 +5,7 @@ import {Block, Blockchain} from './simpleChain'
 import {NotrayaMessageManager, Star} from './notraryService'
 import toNumber from "lodash/toNumber"
 import round from "lodash/round"
+import omit from "lodash/omit"
 
 const router = express()
 const notrayaMessageManager = new NotrayaMessageManager()
@@ -136,7 +137,7 @@ const initPost = (blockchain) => {
               message: `${address}:${requestTimeStamp}:starRegistry`,
               validationWindow,
             }
-            notrayaMessageManager.saveMessage(address, result)
+            notrayaMessageManager.saveMessage(address, omit(result, 'validationWindow'))
           }
           res.status(200)
           res.send(result)
@@ -172,9 +173,9 @@ const initPost = (blockchain) => {
 
       notrayaMessageManager.getMessage(address).then(message=>{
         try{
-          const validationWindow = (new Date().getTime() - toNumber(message.requestTimeStamp))/1000
+          const validationWindow = DEFAULT_VALIDATION_WINDOW - (new Date().getTime() - toNumber(message.requestTimeStamp))/1000
 
-          if(DEFAULT_VALIDATION_WINDOW >= validationWindow){
+          if(validationWindow > 0){
             const verifyResult = bitcoinMessage.verify(JSON.stringify(message), address, signature)
             const status = message
             message.messageSignature = verifyResult ? "valid" : "invalid"
