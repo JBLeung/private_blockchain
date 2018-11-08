@@ -173,10 +173,12 @@ const initPost = (blockchain) => {
         try{
             const status = notrayaMessageManager.getMessageValidation(messageObject, address, signature)
             if(status){
+              const {messageSignature, requestTimeStamp} = status
               const result = {
-                registerStar: true,
+                registerStar: messageSignature,
                 status
               }
+              if(messageSignature) notrayaMessageManager.saveValidatedAddress(address, requestTimeStamp)
               res.status(200)
               res.send(result)
             }else{
