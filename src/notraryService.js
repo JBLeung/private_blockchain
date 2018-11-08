@@ -86,16 +86,22 @@ class NotrayaMessageManager {
     }
     return false
   }
+  getValidatedKey(address){
+    return `validated-${address}`
+  }
   saveValidatedAddress(address, requestTimeStamp){
-    this.levelDB.addLevelDBData(`validated-${address}`, JSON.stringify({requestTimeStamp})).then()
+    this.levelDB.addLevelDBData(this.getValidatedKey(address), JSON.stringify({requestTimeStamp})).then()
   }
   checkAddressIsValidated(address){
     return new Promise((resolve, reject)=>{
-      this.levelDB.getLevelDBData(`validated-${address}`).then(validatedAddressObject=>{
+      const validatedDataKey = this.getValidatedKey(address)
+      this.levelDB.getLevelDBData(validatedDataKey).then(validatedAddressObject=>{
         if(validatedAddressObject){
           try{
             const {requestTimeStamp} = JSON.parse(validatedAddressObject)
-            resolve(this.getValidationWindow(requestTimeStamp) > 0)
+            const isValidated = this.getValidationWindow(requestTimeStamp) > 0
+            this.levelDB.deleteData(validatedDataKey).then()
+            resolve(isValidated)
           }catch(err){
             reject(err)
           }

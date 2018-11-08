@@ -55,6 +55,19 @@ class levelDB {
         })
     }).then()
   }
+
+  // remove data by key
+  deleteData(key){
+    return new Promise((resolve, reject)=>{
+      this.db.del(key, err=>{
+        if(err){
+          reject(err)
+        }else{
+          resolve(true)
+        }
+      })
+    })
+  }
 }
 
 export default levelDB
