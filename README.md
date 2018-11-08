@@ -61,6 +61,7 @@ Please see detail in .eslintrc
 * [Express](https://github.com/expressjs/express) - API library
 * [LevelDB](https://github.com/google/leveldb) - Used store blockchain data
 * [Lodash](https://github.com/lodash/lodash) - Utilities library for js easier by taking the hassle out of working with arrays, numbers, objects, strings, etc
+* [Bitcoinjs-Message](https://github.com/bitcoinjs/bitcoinjs-message) - Sign/Verify Bitcoin message
 
 
 ## Contributing

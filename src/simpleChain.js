@@ -6,6 +6,8 @@
 import get from 'lodash/get'
 import isEmpty from 'lodash/isEmpty'
 import forEach from 'lodash/forEach'
+import map from 'lodash/map'
+import compact from 'lodash/compact'
 import SHA256 from 'crypto-js/sha256'
 import LevelDBManager from './levelDB'
 
@@ -43,7 +45,7 @@ class Blockchain {
   }
 
   // Add new block
-  async addBlock(newBlock, key) {
+  async addBlock(newBlock) {
     const chain = await this.getChain()
     const currnetChainHeight = chain.length
     // Block height
@@ -60,7 +62,7 @@ class Blockchain {
     newBlock.hash = SHA256(JSON.stringify(newBlock)).toString()
     // Adding block object to chain
 
-    return this.levelDB.addLevelDBData(key?key:newBlock.height, JSON.stringify(newBlock))
+    return this.levelDB.addLevelDBData(newBlock.height, JSON.stringify(newBlock))
   }
 
   // Get block height
@@ -78,6 +80,24 @@ class Blockchain {
       console.log('Error: getBlock', e)
       return false
     }
+  }
+
+  async searchBlock({address, hash}){
+    const chain = await this.getChain()
+    const result = map(chain, block=>{
+      const value = JSON.parse(get(block, 'value', {}))
+
+      if(value){
+        const {hash: blockHash} = value
+        const body = get(value, 'body', {})
+        const {address: blockAddress} = body
+        if(address === blockAddress && !hash) return value
+        if(hash === blockHash && !address) return value
+        if(address === blockAddress && hash === blockHash) return value
+      }
+      return false
+    })
+    return compact(result)
   }
 
   // validate block

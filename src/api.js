@@ -42,21 +42,30 @@ const initGet = (blockchain) => {
   })
 
   // /stars/address:[ADDRESS]
-  router.get('/stars/address:address', async (req, res) => {
+  router.get('/stars/address::address', async (req, res) => {
     try {
       const {address} = req.params
-      const block = await blockchain.getBlock(address)
-      if (block) {
-        res.send(block)
-      } else {
-        const error = new Error(`Block not exist, address:${address}`)
-        error.code = 'BLOCK_NOT_EXIST'
-        throw error
-      }
+      blockchain.searchBlock({address}).then(result=>{
+        res.send(result)
+      })
     } catch (err) {
       if (err) {
         const {message, code} = err
-        errorHandling(res, err, 400, {key: '/stars/address:address', message, code})
+        errorHandling(res, err, 400, {key: '/stars/address::address', message, code})
+      }
+    }
+  })
+  // /stars/hash:[HASH]
+  router.get('/stars/hash::hash', async (req, res) => {
+    try {
+      const {hash} = req.params
+      blockchain.searchBlock({hash}).then(result=>{
+        res.send(result)
+      })
+    } catch (err) {
+      if (err) {
+        const {message, code} = err
+        errorHandling(res, err, 400, {key: '/stars/hash::hash', message, code})
       }
     }
   })
@@ -90,7 +99,7 @@ const initPost = (blockchain) => {
 
         const {value} = await blockchain.addBlock(new Block({
           address, star: starObject
-        }),address)
+        }))
         res.status(200)
         res.send(JSON.parse(value))
     } catch (err) {
