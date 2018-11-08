@@ -25,6 +25,7 @@ const initGet = (blockchain) => {
       const {blockHeight} = req.params
       const block = await blockchain.getBlock(blockHeight)
       if (block) {
+        notrayaMessageManager.formatStarObject(block)
         res.send(block)
       } else {
         const error = new Error(`Block not exist, blockHeight:${blockHeight}`)
@@ -43,8 +44,9 @@ const initGet = (blockchain) => {
   router.get('/stars/address::address', async (req, res) => {
     try {
       const {address} = req.params
-      blockchain.searchBlock({address}).then(result=>{
-        res.send(result)
+      blockchain.searchBlock({address}).then(results=>{
+        notrayaMessageManager.formatStarObject(results)
+        res.send(results)
       })
     } catch (err) {
       if (err) {
@@ -57,8 +59,9 @@ const initGet = (blockchain) => {
   router.get('/stars/hash::hash', async (req, res) => {
     try {
       const {hash} = req.params
-      blockchain.searchBlock({hash}).then(result=>{
-        res.send(result)
+      blockchain.searchBlock({hash}).then(results=>{
+        notrayaMessageManager.formatStarObject(results)
+        res.send(results)
       })
     } catch (err) {
       if (err) {

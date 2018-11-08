@@ -5,6 +5,8 @@ import round from 'lodash/round'
 import bitcoinMessage from 'bitcoinjs-message'
 import toNumber from 'lodash/toNumber'
 import get from 'lodash/get'
+import forEach from 'lodash/forEach'
+import isArray from 'lodash/isArray'
 
 const message3rdKey = 'starRegistry'
 const messageSeparator = ':'
@@ -112,6 +114,13 @@ class NotrayaMessageManager {
   }
   getDefaultValidationWindow(){
     return DEFAULT_VALIDATION_WINDOW
+  }
+  formatStarObject(objects){
+    if(!isArray(objects)) objects = [objects]
+    forEach(objects, object=>{
+      const hexStory = get(object, 'body.star.story')
+      if(hexStory) object.body.star.story = new Buffer.from(hexStory, 'hex').toString()
+    })
   }
 }
 
