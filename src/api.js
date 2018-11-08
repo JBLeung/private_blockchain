@@ -115,17 +115,32 @@ const initPost = (blockchain) => {
     try {
       const {address} = req.body
       if (address) {
-        const validationWindow = DEFAULT_VALIDATION_WINDOW
-        const requestTimeStamp = new Date().getTime()
-        const result = {
-          address,
-          requestTimeStamp,
-          message: `${address}:${requestTimeStamp}:starRegistry`,
-          validationWindow,
-        }
-        notrayaMessageManager.saveMessage(address, result)
-        res.status(200)
-        res.send(result)
+        notrayaMessageManager.getMessage(address).then(messageObj=>{
+          let result = {}
+          let isDone = false
+          if(messageObj){
+            result = messageObj
+            const {requestTimeStamp:previousRequestTimeStamp} = messageObj
+            const validationWindow = DEFAULT_VALIDATION_WINDOW - (new Date().getTime() - toNumber(previousRequestTimeStamp))/1000
+            if(validationWindow > 0){
+              result.validationWindow = round(validationWindow)
+              isDone = true
+            }
+          }
+          if(!isDone){
+            const requestTimeStamp = new Date().getTime()
+            const validationWindow = DEFAULT_VALIDATION_WINDOW
+            result = {
+              address,
+              requestTimeStamp,
+              message: `${address}:${requestTimeStamp}:starRegistry`,
+              validationWindow,
+            }
+            notrayaMessageManager.saveMessage(address, result)
+          }
+          res.status(200)
+          res.send(result)
+        })
       } else {
         const error = new Error('Missing require address')
         error.code = 'MISSING_REQUIRE_FIELD'

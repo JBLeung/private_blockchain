@@ -56,9 +56,7 @@ class NotrayaMessageManager {
   }
   saveMessage(address, message){
     this.levelDB.addLevelDBData(address, JSON.stringify(message)).then(()=>{
-      this.levelDB.getLevelDBData(address).then(mm=>{
-        console.log(`check:001 mm` , mm)
-      })
+      this.levelDB.getLevelDBData(address).then()
     })
   }
   getMessage(address){
