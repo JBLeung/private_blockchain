@@ -4,6 +4,7 @@ import LevelDBManager from './levelDB'
 import round from 'lodash/round'
 import bitcoinMessage from 'bitcoinjs-message'
 import toNumber from 'lodash/toNumber'
+import get from 'lodash/get'
 
 const message3rdKey = 'starRegistry'
 const messageSeparator = ':'
@@ -72,14 +73,14 @@ class NotrayaMessageManager {
       })
     })
   }
-  getMessageValidation(message, address, signature){
-    const validationWindow = this.getValidationWindow(message.requestTimeStamp)
+  getMessageValidation(messageObject, address, signature){
+    const validationWindow = this.getValidationWindow(messageObject.requestTimeStamp)
 
     if(validationWindow > 0){
-      const verifyResult = bitcoinMessage.verify(JSON.stringify(message), address, signature)
-      message.messageSignature = verifyResult ? "valid" : "invalid"
-      message.validationWindow = round(validationWindow)
-      return message
+      const verifyResult = bitcoinMessage.verify(get(messageObject,'message',''), address, signature)
+      messageObject.messageSignature = verifyResult ? "valid" : "invalid"
+      messageObject.validationWindow = round(validationWindow)
+      return messageObject
     }
     return false
   }

@@ -169,9 +169,9 @@ const initPost = (blockchain) => {
         throw error
       }
 
-      notrayaMessageManager.getMessage(address).then(message=>{
+      notrayaMessageManager.getMessage(address).then(messageObject=>{
         try{
-            const status = notrayaMessageManager.getMessageValidation(message, address, signature)
+            const status = notrayaMessageManager.getMessageValidation(messageObject, address, signature)
             if(status){
               const result = {
                 registerStar: true,
