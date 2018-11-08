@@ -24,10 +24,9 @@ class Star{
 
   getStartObject(){
     if(!this.rightAscension || !this.declination || !this.story) return false
-    if(this.story.length > 250) return false
+    if(this.story.length > 500) return false
 
     const hexStory = new Buffer(this.story).toString('hex')
-    if(hexStory.length > 500) return false
 
     return{
       ra: this.rightAscension,
