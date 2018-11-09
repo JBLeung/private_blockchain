@@ -66,10 +66,14 @@ class NotrayaMessageManager {
   getMessage(address){
     return new Promise((resolve, reject)=>{
       this.levelDB.getLevelDBData(address).then(message=>{
-        try{
-          resolve(JSON.parse(message))
-        }catch(err){
-          reject(err)
+        if(message){
+          try{
+            resolve(JSON.parse(message))
+          }catch(err){
+            reject(err)
+          }
+        }else{
+          resolve(false)
         }
       })
     })

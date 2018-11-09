@@ -176,25 +176,30 @@ const initPost = (blockchain) => {
       }
 
       notrayaMessageManager.getMessage(address).then(messageObject=>{
-        try{
-            const status = notrayaMessageManager.getMessageValidation(messageObject, address, signature)
-            if(status){
-              const {messageSignature, requestTimeStamp} = status
-              const result = {
-                registerStar: messageSignature,
-                status
+        if(messageObject){
+          try{
+              const status = notrayaMessageManager.getMessageValidation(messageObject, address, signature)
+              if(status){
+                const {messageSignature, requestTimeStamp} = status
+                const result = {
+                  registerStar: messageSignature,
+                  status
+                }
+                if(messageSignature) notrayaMessageManager.saveValidatedAddress(address, requestTimeStamp)
+                res.status(200)
+                res.send(result)
+              }else{
+                const error = new Error("Validation window expired")
+                error.code = 'EXPIRED'
+                throw error
               }
-              if(messageSignature) notrayaMessageManager.saveValidatedAddress(address, requestTimeStamp)
-              res.status(200)
-              res.send(result)
-            }else{
-              const error = new Error("Validation window expired")
-              error.code = 'EXPIRED'
-              throw error
-            }
-        }catch(err){
-          const {message, code} = err
-          errorHandling(res, err, 400, {key: '/message-signature/validate', message, code})
+          }catch(err){
+            const {message, code} = err
+            errorHandling(res, err, 400, {key: '/message-signature/validate', message, code})
+          }
+        }else{
+          res.status(404)
+          res.send("Please request validation first")
         }
       })
 

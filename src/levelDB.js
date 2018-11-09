@@ -1,4 +1,5 @@
-const level = require('level')
+import startsWith from 'lodash/startsWith'
+import level from 'level'
 
 class levelDB {
   constructor(dir) {
@@ -22,7 +23,10 @@ class levelDB {
   getLevelDBData(key) {
     return new Promise((resolve, reject) => {
       this.db.get(key, (err, value) => {
-        if (err) return reject(err)
+        if (err) {
+          if(startsWith(err.message, "Key not found in database")) return resolve(false)
+          return reject(err)
+        }
         return resolve(value)
       })
     })
