@@ -4,6 +4,7 @@ import {Block, Blockchain} from './simpleChain'
 import {NotrayaMessageManager, Star} from './notraryService'
 import round from "lodash/round"
 import omit from "lodash/omit"
+import get from 'lodash/get'
 
 const router = express()
 const notrayaMessageManager = new NotrayaMessageManager()
@@ -25,7 +26,8 @@ const initGet = (blockchain) => {
       const {blockHeight} = req.params
       const block = await blockchain.getBlock(blockHeight)
       if (block) {
-        notrayaMessageManager.formatStarObject(block)
+        const hexStory = get(block, 'body.star.story')
+        if(hexStory) block.body.star.storyDecoded = notrayaMessageManager.decodeStory(hexStory)
         res.send(block)
       } else {
         const error = new Error(`Block not exist, blockHeight:${blockHeight}`)

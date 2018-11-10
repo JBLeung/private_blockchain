@@ -128,8 +128,11 @@ class NotrayaMessageManager {
     if(!isArray(objects)) objects = [objects]
     forEach(objects, object=>{
       const hexStory = get(object, 'body.star.story')
-      if(hexStory) object.body.star.story = new Buffer.from(hexStory, 'hex').toString()
+      if(hexStory) object.body.star.story = this.decodeStory(hexStory)
     })
+  }
+  decodeStory(encodedStory){
+    return new Buffer.from(encodedStory, 'hex').toString()
   }
 }
 
